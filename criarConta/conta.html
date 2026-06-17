@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta</title>
+    <link rel="stylesheet" href="conta.css">
+</head>
+
+<body>
+
+    <div class="voltar">
+        <p>
+            <a href="../controle/controle.html">← Voltar</a>
+        </p>
+    </div>
+
+    <div class="container">
+
+
+        <form id="CriarConta" class="CriarConta">
+            <h1>Criar Conta</h1>
+            <div class="form-group">
+                <label for="username">Nome de utilizador:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Palavra-passe:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="armazem_id">Código do Armazém:</label>
+                <input type="text" id="armazem_id" name="armazem_id" placeholder="AMZ005" required>
+            </div>
+            <div class="form-group">
+                <label for="perfil">Perfil:</label>
+                <select id="perfil" name="perfil" required>
+                    <option value="">-- Selecione um perfil --</option>
+                    <option value="4">Funcionário</option>
+                    <option value="5">Gerente</option>
+                    <option value="6">Administrador</option>
+                </select>
+            </div>
+            <button type="submit">Criar Conta</button>
+            <p>Já tem uma conta? <a href="../login/login.html">Iniciar sessão</a> </p>
+        </form>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="conta.js"></script>
+</body>
+
+</html>

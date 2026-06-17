@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Produtos</title>
+  <link rel="stylesheet" href="contagem.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+
+<body>
+
+  <div class="voltar">
+    <p><a href="../controle/controle.html">← Voltar</a></p>
+  </div>
+
+  <div class="container">
+    <h1>Contagem</h1>
+
+    <input type="text" id="pesquisa" placeholder="Procurar produto...">
+
+    <!-- Tabela -->
+    <table>
+      <thead>
+        <tr>
+          <th class="id">ID</th>
+          <th class="campo-nome">Nome</th>
+          <th class="campo-quantidade">quantidade</th>
+          <th class="campo-armazem">Armazém</th>
+          <th>Data</th>
+
+        </tr>
+      </thead>
+      <tbody id="tabela-contagem"></tbody>
+    </table>
+
+    <!-- Paginação -->
+    <div class="paginacao">
+      <button onclick="paginaAnterior()">
+        <span class="material-symbols-outlined">
+          arrow_back_ios
+        </span>
+      </button>
+
+      <span id="pagina-info"></span>
+
+      <button onclick="proximaPagina()">
+        <span class="material-symbols-outlined">
+          arrow_forward_ios
+        </span>
+      </button>
+    </div>
+
+  </div>
+
+  <script src="../auth.js"></script>
+  <script src="contagem.js"></script>
+
+</body>
+
+</html>

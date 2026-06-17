@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sessão</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="container">
+        <form id="Login" class="Login">
+            <h1>Iniciar Sessão</h1>
+
+            <div class="form-group">
+                <label for="credencial">Código/Email:</label>
+                <input type="text" id="credencial" name="credencial" placeholder="..." required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Código/Palavra-passe:</label>
+                <input type ="password" id="senha" name="senha" placeholder=".." required>
+            </div>
+
+            <button type="submit">Iniciar Sessão</button>
+            <p>Não tem uma conta? <a href="../criarConta/conta.html">Criar Conta</a></p>
+        </form>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="login.js"></script>
+</body>
+
+</html>

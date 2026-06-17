@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Pessoal</title>
+    <link rel="stylesheet" href="ficha.css">
+</head>
+<body>
+
+    <div class="voltar">
+        <a href="../controle/controle.html">← Voltar</a>
+    </div>
+
+    <div class="container">
+        <div class="dadosForm">
+            <h1>Ficha Pessoal</h1>
+
+            <form id="formDados">
+
+                <!-- DADOS PESSOAIS -->
+                <fieldset>
+                    <legend>Dados Pessoais</legend>
+
+                    <div class="grid">
+
+                        <div class="form-group">
+                            <label>Código Utilizador</label>
+                            <input type="number" id="codigoUser" name="userCode" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Número empregado</label>
+                            <input type="number" id="numeroEmpregado" name="numeroEmpregado" placeholder="ex: 123"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" name="nome" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nº Cartão de Cidadão</label>
+                            <input type="text" name="cc" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" name="dataNascimento" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Estado Civil</label>
+                            <select name="estadoCivil">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option>Solteiro/a</option>
+                                <option>Casado/a</option>
+                                <option>Viúvo/a</option>
+                                <option>Divorciado/a</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Habilitações</label>
+                            <input type="text" name="habilitacoes">
+                        </div>
+
+                    </div>
+                </fieldset>
+
+                <!-- PROFISSIONAL -->
+                <fieldset id="dadosTrabalho" style="display:none;">
+                    <legend>Dados Profissionais</legend>
+
+                    <div class="grid">
+
+                        <div class="form-group">
+                            <label>Nº Beneficiário</label>
+                            <input type="text" name="numeroB">
+                        </div>
+
+                        <div class="form-group">
+                            <label>NIF</label>
+                            <input type="text" name="nif">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Titulares</label>
+                            <input type="number" name="titulares">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dependentes</label>
+                            <input type="number" name="dependentes">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Contrato</label>
+                            <select name="tipoContrato">
+                                <option value="">Selecione</option>
+                                <option value="full-time">Full-time</option>
+                                <option value="part-time">Part-time</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Profissão</label>
+                            <input type="text" name="profissao">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Salário</label>
+                            <input type="number" step="0.01" name="salario">
+                        </div>
+
+                    </div>
+                </fieldset>
+
+                <!-- MORADA -->
+                <fieldset id="morada" style="display:none;">
+                    <legend>Morada</legend>
+
+                    <div class="grid">
+
+                        <div class="form-group">
+                            <label>Morada</label>
+                            <input type="text" name="morada">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Naturalidade</label>
+                            <input type="text" name="naturalidade">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Freguesia</label>
+                            <input type="text" name="freguesia">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Concelho</label>
+                            <input type="text" name="concelho">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Distrito</label>
+                            <input type="text" name="distrito">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Código Postal</label>
+                            <input type="text" name="codigoP" placeholder="1234-567">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <input type="tel" name="telefone">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email">
+                        </div>
+
+                    </div>
+                </fieldset>
+
+                <div id="guardarBTN">
+                    <button type="submit" class="guardarBTN">Guardar</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="ficha.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Transferência de Produtos</title>
+  <link rel="stylesheet" href="trans.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+
+<body>
+
+  <div class="voltar">
+    <p>
+      <a href="../controle/controle.html">← Voltar</a>
+    </p>
+  </div>
+
+  <div class="container">
+    <h1>Transferência de Produtos</h1>
+
+    <!-- SELEÇÃO DE ARMAZÉNS -->
+    <div class="armazem-section">
+      <div class="armazem-grupo">
+        <label for="armazem-origem">Armazém de Origem:</label>
+        <select id="armazem-origem">
+          <option value="">-- Selecione um armazém --</option>
+        </select>
+      </div>
+
+      <div class="armazem-grupo">
+        <label for="armazem-destino">Armazém de Destino:</label>
+        <select id="armazem-destino">
+          <option value="">-- Selecione um armazém --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABELA DE PRODUTOS -->
+    <table id="tabela-transferencia" style="display: none;">
+      <thead>
+        <tr>
+          <th class="id">ID</th>
+          <th class="campo-nome">Nome</th>
+          <th class="campo-fornecedor">Fornecedor</th>
+          <th class="campo-stock">Stock Disponível</th>
+          <th class="campo-quantidade">Quantidade a Transferir</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-produtos-trans"></tbody>
+    </table>
+
+    <p id="mensagem-vazia" class="mensagem-info">Selecione um armazém de origem para visualizar os produtos</p>
+
+    <!-- BOTÃO DE TRANSFERÊNCIA -->
+    <div class="acoes">
+      <button id="btn-transferir" class="btn-transferir" style="display: none;">
+        Confirmar Transferência
+      </button>
+    </div>
+
+  </div>
+
+  <script src="trans.js"></script>
+  <script src="../auth.js"></script>
+</body>
+
+</html>

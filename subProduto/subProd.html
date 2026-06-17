@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Produtos</title>
+  <link rel="stylesheet" href="subProd.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=menu" />
+</head>
+
+<body>
+
+  <!-- side bar para menu -->
+  <button class="menuBTN" id="menuBTN">
+    <span class="material-symbols-outlined">menu</span>
+  </button>
+
+
+  <div class="menu" id="menu">
+
+    <h3>Sub paginas</h3>
+    <div class="page">
+      <a href="../produtos/produtos.html">Produtos</a>
+    </div>
+
+    <div class="montra">
+      <a href="../montra/montra.html">Produtos-Prateleira</a>
+    </div>
+
+    <div class="voltar">
+      <p>
+        <a href="../controle/controle.html">← Voltar</a>
+      </p>
+    </div>
+
+  </div>
+
+
+  <div class="container">
+    <h1>Gestão de stock</h1>
+    <p class="armazem-info">Armazém: <strong id="armazem-nome">-</strong></p>
+
+    <!-- Pesquisa -->
+    <input type="text" id="pesquisa" placeholder="Procurar produto...">
+
+    <div class="filtros-produtos">
+      <select id="filtroTipoProd">
+        <option value="">Filtro</option>
+        <option value="prodVenda">Produtos para venda</option>
+        <option value="prodConsumo">Produtos para consumo</option>
+        <option value="prodBrinde">Produtos para brinde</option>
+      </select>
+    </div>
+
+    <!-- Tabela -->
+    <table>
+      <thead>
+        <tr>
+          <th class="id">ID</th>
+          <th class="campo-nome">Nome</th>
+          <th class="tipoProd">Tipo de produto</th>
+          <th class="campo-fornecedor">Fornecedor</th>
+          <th class="campo-armazem">Armazém</th>
+          <th class="campo-stock">Stock</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-produtos"></tbody>
+    </table>
+
+    <!-- Paginação -->
+    <div class="paginacao">
+
+      <button class="btnPagina" onclick="paginaAnterior()">
+        <span class="material-symbols-outlined">
+          arrow_back_ios
+        </span>
+      </button>
+
+      <span id="pagina-info"></span>
+
+      <button class="btnPagina" onclick="proximaPagina()">
+        <span class="material-symbols-outlined">
+          arrow_forward_ios
+        </span>
+      </button>
+    </div>
+  </div>
+
+
+  <script src="../auth.js"></script>
+  <script src="subProd.js"></script>
+</body>
+
+</html>

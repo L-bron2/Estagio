@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controlo de páginas</title>
+    <link rel="stylesheet" href="controle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=menu" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=logout" />
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Dados do utilizador -->
+        <div class="dadosUtilizador">
+            <p id="nome_utilizador"></p>
+            <p id="Meu_codigo"></p>
+            <p id="Codigo_armazem"></p>
+            <p id="nivel_acesso"></p>
+            <p id="numeroProdutos"></p>
+            <div class="section">
+                <section id="section">
+                    <select id ="location">
+                        <option value="">Selecione uma localização</option>
+                        <option value="Alverca">Alverca</option>
+                        <option value="Montijo">Montijo</option>
+                    </select>
+                </section>
+            </div>
+        </div>
+
+        <!-- Upload PDF -->
+        <div class="pdf-files">
+            <form id="sendPDF" enctype="multipart/form-data">
+
+                <!-- tipos de arquivos que pode se fazer upload -->
+                <input type="text" id="pdfName" placeholder="Nome do ficheiro...">
+
+                <label for="pdfFile" style="cursor: pointer;">
+                    (click) Selecionar ficheiro
+                </label>
+
+                <input type="file" id="pdfFile" name="pdfFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.dat"
+                    hidden>
+
+                <!-- Nome do ficheiro pdf -->
+                <div id="file-name" style="font-size: 0.8rem; color: #6366f1; margin-bottom: 10px; font-weight: 500;">
+                    Nenhum ficheiro selecionado
+                </div>
+
+                <button type="submit" class="PDF-button">Enviar</button>
+            </form>
+        </div>
+
+
+        <!-- side bar para menu -->
+        <button class="menuBTN" id="menuBTN">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+
+        <div class="menu" id="menu">
+
+            <h1>Acesso a tabelas</h1>
+
+            <div class="produtosTable" id="link-produtos">
+                <a href="../produtos/produtos.html">Produtos</a>
+            </div>
+
+            <div class="consumoTable" id="link-consumo">
+                <a href="../consumo/consumo.html">Consumo interno</a>
+            </div>
+
+            <div class="contagemTable" id="link-contagem">
+                <a href="../contagem/contagem.html">Contagem de produtos</a>
+            </div>
+
+            <div class="transferenciaTable" id="link-transferencia">
+                <a href="../transferencia/trans.html">transferências de produtos</a>
+            </div>
+
+            <div class="movimentoTable" id="link-movimentos">
+                <a href="../movimentos/movimentos.html">Movimentos</a>
+            </div>
+
+            <div class="PDF-Movimentos" id="link-pdfMovimento">
+                <a href="../movimentosPDF/pdfMov.html">PDF - movimentos</a>
+            </div>
+
+            <div class="relatorioTable" id="link-relatorio">
+                <a href="../relatorio/relatorio.html">Relatórios</a>
+            </div>
+
+            <div class="relatorioTable" id="link-rmensal">
+                <a href="../Rmensal/Rmensal.html">Relatório mensal</a>
+            </div>
+
+            <div class="Meusdados">
+                <a href="../fichaPessoal/ficha.html">Ficha pessoal</a>
+            </div>
+
+            <div class="meuRegistro" id="link-registro">
+                <a href="../meuRegistro/registro.html">Meu registro</a>
+            </div>
+
+            <div class="criarConta" id="link-login">
+                <a href="../criarConta/conta.html">Criar conta</a>
+            </div>
+
+            <button id="sair" class="sair">
+                <span class="material-symbols-outlined">logout</span>
+            </button>
+        </div>
+
+        <!-- LISTA DE PDFs -->
+        <div class="PDF-list" id="PDF_list" style="display: none;">
+
+            <!-- Aqui os PDFs vão ser inseridos peloJS -->
+            <div id="pdf-container"></div>
+        </div>
+
+        <!-- botão abrir histórico -->
+        <div class="historyButtonBox">
+            <button type="button" id="open-history" class="history-button">Ver histórico PDFs</button>
+        </div>
+
+        <!-- modal histórico -->
+        <div class="pdf-views-modal" id="pdf-views-modal" style="display: none;">
+            <div class="pdf-views" id="pdf-views">
+                <div class="pdf-views-header">
+                    <h2>histórico de visualizaçõeos</h2>
+                </div>
+                <div id="pdf-views-container">
+                    <p class="empty-history">Sem histórico de visualizaçõeos.</p>
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <div id="loader" class="hidden">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <p>A carregar...</p>
+        </div>
+    </div>
+
+    <div id="termos-modal" class="termos-modal">
+        <div class="termos-box">
+            <h2>Termos e Condições</h2>
+            <br>
+            <p>Aceitar os termos e condições?</p>
+            <br>
+            <button id="aceitar-termos">Aceitar</button>
+        </div>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="controle.js"></script>
+
+</body>
+
+</html>

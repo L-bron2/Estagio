@@ -1,0 +1,32 @@
+{
+  "name": "clinica",
+  "version": "1.0.0",
+  "description": "",
+  "main": "servidor.js",
+  "scripts": {
+    "Start": "nodemon servidor.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mssql": "^12.5.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.7",
+    "path": "^0.12.7",
+    "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.18.0",
+    "pdfkit-table": "^0.1.99",
+    "pdfmake": "^0.3.7",
+    "roboto-font": "^0.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

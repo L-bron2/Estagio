@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório mensal</title>
+    <link rel="stylesheet" href="Rmensal.css">
+</head>
+<body>
+
+    <div class="voltar">
+        <p>
+            <a href="../controle/controle.html">← Voltar</a>
+        </p>
+    </div>
+
+    <div class="container">
+        <h1>Relatório mensal</h1>
+
+        <!-- list os ficheiros guardados na bd e que podem ser gerados pdfs -->
+        <div class="filtros-section upload-report-section">
+            <h2>Relatórios de Ficheiros Guardados</h2>
+
+            <div class="input-section">
+                <div class="input-grup">
+                    <label for="ficheiro-relatorio">Ficheiro:</label>
+                    <select id="ficheiro-relatorio">
+                        <option value="">-- Seleciona um ficheiro --</option>
+                    </select>
+
+                    <button id="gerar-relatorio-ficheiro-btn" type="button">Gerar relatório</button>
+                </div>
+            </div>
+
+            <p id="estado-relatorio-ficheiro" class="estado-relatorio">
+                Nenhum relatório gerado ainda.
+            </p>
+
+            <div id="resumo-relatorio-ficheiro" class="resumo-relatorio-ficheiro"></div>
+            <div id="detalhes-relatorio-ficheiro" class="detalhes-relatorio-ficheiro"></div>
+            <button id="btnDownload" class="download">Download</button>
+        </div>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="Rmensal.js"></script>
+</body>
+</html>

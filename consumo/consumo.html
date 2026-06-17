@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Consumo</title>
+  <link rel="stylesheet" href="consumo.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+
+<body>
+
+  <div class="voltar">
+    <p><a href="../controle/controle.html">← Voltar</a></p>
+  </div>
+
+  <div class="container">
+    <h1>Consumo</h1>
+
+    <!-- Pesquisa -->
+    <input type="text" id="pesquisa" placeholder="Procurar produto...">
+
+    <!-- Tabela -->
+    <table>
+      <thead>
+        <tr>
+          <th class="id">ID</th>
+          <th class="campo-nome">Nome</th>
+          <th class="campo-stock">Quantidade</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-consumo"></tbody>
+    </table>
+
+  </div>
+
+  <script src="../auth.js"></script>
+  <script src="consumo.js"></script>
+</body>
+
+</html>

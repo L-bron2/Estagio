@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head> 
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF - Movimentos</title>
+    <link rel="stylesheet" href="pdfMov.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+</head>
+
+<body>
+
+     <div class="voltar">
+        <p><a href="../controle/controle.html">← Voltar</a></p>
+    </div>
+    
+    <div class="container">
+        <h1>PDF - Movimentos</h1>
+
+        <input type="text" id="pesquisa" placeholder="Procurar movimento PDF...">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Funcionario</th>
+                    <th>PDF</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-movimentos"></tbody>
+        </table>
+
+        <!-- Paginação -->
+        <div class="paginacao">
+            <button onclick="paginaAnterior()">
+                <span class="material-symbols-outlined">
+                    arrow_back_ios
+                </span>
+            </button>
+
+            <span id="pagina-info"></span>
+
+            <button onclick="proximaPagina()">
+                <span class="material-symbols-outlined">
+                    arrow_forward_ios
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../auth.js"></script>
+    <script src="pdfMov.js"></script>
+</body>
+
+</html>
