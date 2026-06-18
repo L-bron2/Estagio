@@ -13,6 +13,16 @@ function nomeTipoProduto(tipoProd) {
   return nomesTipoProduto[tipoProd] || "-";
 }
 
+function obterQuantidade(input) {
+  const quantidadeDigitada = input ? parseInt(input.value, 10) : NaN;
+
+  if (Number.isInteger(quantidadeDigitada) && quantidadeDigitada > 0) {
+    return quantidadeDigitada;
+  }
+
+  return 1;
+}
+
 // CARREGAR PRODUTOS
 async function carregarProdutos() {
   await comLoader(async () => {
@@ -78,12 +88,9 @@ function mostrarProdutos() {
       <td>${produto.stock}</td>
       <td>
         <input type="number" id="add-${produto.id}" placeholder="Qtd" style="width:60px;">
-        
-        <button class="btnUpdateStock" onclick="atualizarTodosStocks(${produto.id}, event)">Adicionar</button>
-        <button class="RemoveStock" onclick="removerStock(${produto.id}, event)">Remover</button>
-  
+        <button class="btnUpdateStock" onclick="atualizarStockProduto(${produto.id}, event)">+</button>
+        <button class="RemoveStock" onclick="removerStock(${produto.id}, event)">-</button>
       </td>
-
     `;
 
     tabela.appendChild(tr);
@@ -99,99 +106,99 @@ function mostrarProdutos() {
 }
 
 // ATUALIZAR STOCKS
-async function atualizarTodosStocks() {
-  const userId = sessionStorage.getItem("userId");
-  const armazem_id = sessionStorage.getItem("armazem_id");
-
-  let atualizou = false;
-
-  try {
-    await comLoader(async () => {
-      for (const produto of produtos) {
-        const input = document.getElementById(`add-${produto.id}`);
-        if (!input) continue;
-
-        const quantidade = parseInt(input.value);
-
-        if (quantidade && quantidade > 0) {
-          atualizou = true;
-
-          await fetch(`${baseAPI}/produtos/adicionar-stock`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              produto_id: produto.id,
-              quantidade,
-              utilizador_id: parseInt(userId),
-              armazem_id: parseInt(armazem_id),
-            }),
-          });
-        }
-      }
-
-      if (!atualizou) {
-        alert("Nenhum valor inserido");
-        return;
-      }
-
-      alert("Stock atualizado!");
-
-      document
-        .querySelectorAll("input[id^='add-']")
-        .forEach((i) => (i.value = ""));
-
-      await carregarProdutos();
-    });
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao atualizar stocks");
-  }
-}
-
-//remover stock
-async function removerStock(id, event) {
+async function atualizarStockProduto(id, event) {
   event.preventDefault();
+
   const userId = parseInt(sessionStorage.getItem("userId"), 10);
   const armazemId = parseInt(sessionStorage.getItem("armazem_id"), 10);
+  const input = document.getElementById(`add-${id}`);
+  const quantidade = obterQuantidade(input);
 
   if (!userId || !armazemId) {
     alert("Sessão expirada. Faça login novamente.");
     return;
   }
 
-  const btn = event && event.target;
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "A processar...";
-  }
-
   try {
-    const res = await fetch(`${baseAPI}/produtos/remover-stock`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        produto_id: id,
-        quantidade: 1,
-        armazem_id: armazemId,
-        utilizador_id: userId,
-      }),
-    });
+    await comLoader(async () => {
+      const res = await fetch(`${baseAPI}/produtos/adicionar-stock`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          produto_id: id,
+          quantidade,
+          utilizador_id: userId,
+          armazem_id: armazemId,
+        }),
+      });
 
-    if (res.ok) {
-      alert("Stock atualizado!");
+      if (!res.ok) {
+        const erro = await res.text();
+        throw new Error(erro || "Erro ao atualizar stock");
+      }
+
+      if (input) {
+        input.value = "";
+      }
+
       await carregarProdutos();
-    } else {
-      alert("Erro ao remover stock");
-    }
+      alert("Stock atualizado!");
+    });
   } catch (err) {
     console.error(err);
-    alert("Erro ao remover stock");
+    alert(err.message || "Erro ao atualizar stock");
   }
 }
 
-// PAGinaçãp
+//remover stock
+async function removerStock(id, event) {
+  event.preventDefault();
+
+  const userId = parseInt(sessionStorage.getItem("userId"), 10);
+  const armazemId = parseInt(sessionStorage.getItem("armazem_id"), 10);
+  const input = document.getElementById(`add-${id}`);
+  const quantidade = obterQuantidade(input);
+
+  if (!userId || !armazemId) {
+    alert("Sessão expirada. Faça login novamente.");
+    return;
+  }
+
+  try {
+    await comLoader(async () => {
+      const res = await fetch(`${baseAPI}/produtos/remover-stock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          produto_id: id,
+          quantidade,
+          armazem_id: armazemId,
+          utilizador_id: userId,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao remover stock");
+      }
+
+      if (input) {
+        input.value = "";
+      }
+
+      await carregarProdutos();
+      alert("Stock removido!");
+    });
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Erro ao remover stock");
+  }
+}
+
+// Pagincação
 function proximaPagina() {
   paginaAtual++;
   mostrarProdutos();

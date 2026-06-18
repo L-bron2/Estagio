@@ -10,6 +10,7 @@ const path = require("path");
 const XLSX = require("xlsx");
 const PDFDocument = require("pdfkit-table");
 const { PDFParse } = require("pdf-parse");
+const { request } = require("http");
 
 const app = express();
 app.use(express.json());
@@ -64,7 +65,7 @@ function obterExtensaoFicheiro(nome = "") {
   return path.extname(String(nome).toLowerCase());
 }
 
-// Limita o tamanho de um texto para apresentação (preview)
+// Limita o tamanho de um texto para apresentação
 function limitarTexto(valor = "", limite = 120) {
   const texto = String(valor ?? "")
     .replace(/\s+/g, " ")
@@ -1458,21 +1459,51 @@ app.post("/location/:userId", async (req, res) => {
   try {
     await poolConexao;
 
-    const result = await pool
+    const checkLocation = await pool
       .request()
-      .input("userId", sql.Int, userId)
-      .input("location", sql.NVarChar(50), String(location).trim())
-      .query(`
-        UPDATE Utilizador
-        SET location = @location
-        WHERE codigo = @userId
+      .input(userId, sql.Int, userId)
+      .input(location, sql.NVarChar(50), location).query(`
+      SELECT * FROM Utilizadores WHERE codigo = @userId
       `);
 
-    if (result.rowsAffected[0] === 0) {
-      return res.status(404).json({ error: "Utilizador não encontrado" });
+    if (checkLocation.recordset.length > 0) {
+      return res.status(200).json({
+        message: "Esse utilizador já esta acossidado a uma localização",
+      });
     }
 
-    return res.json({ ok: true, location: String(location).trim() });
+    const existeLocation = checkLocation.recordset.length > 0;
+
+    if (existeLocation) {
+      await request(
+        sql.query(`
+        UPDATE Utilizador 
+        SET location = @location
+        WHERE codigo = @userId
+        `),
+      );
+
+      return res.json({
+        "Localização atualizada": true,
+        location: String(location).trim(),
+      });
+    } else {
+      const result = await pool
+        .request()
+        .input("userId", sql.Int, userId)
+        .input("location", sql.NVarChar(50), String(location).trim()).query(`
+          INSERT INTO Utilizador (location) VALUE (@location) WHERE codigo = @userId
+        `);
+
+      if (result.rowsAffected[0] === 0) {
+        return res.status(404).json({ error: "Utilizador não encontrado" });
+      }
+
+      return res.json({
+        "Localização guardada": true,
+        location: String(location).trim(),
+      });
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro ao guardar localização" });
@@ -1599,13 +1630,16 @@ app.get("/produtos", async (req, res) => {
 //adicionar stock (regista movimento de entrada)
 app.post("/produtos/adicionar-stock", async (req, res) => {
   const produtoId = toInt(req.body.produto_id);
-  const quantidade = toInt(req.body.quantidade);
+  const quantidadeRecebida = toInt(req.body.quantidade);
+  const quantidade =
+    Number.isInteger(quantidadeRecebida) && quantidadeRecebida > 0
+      ? quantidadeRecebida
+      : 1;
   const utilizadorId = toInt(req.body.utilizador_id);
   const armazemId = toInt(req.body.armazem_id);
 
   if (
     !isPositiveInt(produtoId) ||
-    !isPositiveInt(quantidade) ||
     !isPositiveInt(utilizadorId) ||
     !isPositiveInt(armazemId)
   ) {
@@ -1632,25 +1666,32 @@ app.post("/produtos/adicionar-stock", async (req, res) => {
   }
 });
 
-
 //remover stock
 app.post("/produtos/remover-stock", async (req, res) => {
   const utilizador_id = toInt(req.body.utilizador_id);
   const produtoId = toInt(req.body.produto_id);
-  const quantidade = toInt(req.body.quantidade);
+  const quantidadeRecebida = toInt(req.body.quantidade);
   const armazemId = toInt(req.body.armazem_id);
+  const quantidade =
+    Number.isInteger(quantidadeRecebida) && quantidadeRecebida > 0
+      ? quantidadeRecebida
+      : 1;
 
-  if (!isPositiveInt(produtoId) || !isPositiveInt(quantidade) || !isPositiveInt(armazemId) || !isPositiveInt(utilizador_id)) {
+  if (
+    !isPositiveInt(produtoId) ||
+    !isPositiveInt(armazemId) ||
+    !isPositiveInt(utilizador_id)
+  ) {
     return res.status(400).json({ error: "Dados inválidos" });
   }
 
   try {
     await poolConexao;
 
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input("produto_id", sql.Int, produtoId)
-      .input("armazem_id", sql.Int, armazemId)
-      .query(`
+      .input("armazem_id", sql.Int, armazemId).query(`
         SELECT
           ISNULL(SUM(
             CASE 
@@ -1664,19 +1705,19 @@ app.post("/produtos/remover-stock", async (req, res) => {
         AND armazem_id = @armazem_id
       `);
 
-    const stockAtual = result.recordset[0].stock_atual || 0;
+    const stockAtual = Number(result.recordset[0]?.stock_atual || 0);
 
     if (stockAtual < quantidade) {
       return res.status(400).json({ error: "Stock insuficiente" });
     }
 
-    await pool.request()
+    await pool
+      .request()
       .input("utilizador_id", sql.Int, utilizador_id)
       .input("produto_id", sql.Int, produtoId)
       .input("quantidade", sql.Int, quantidade)
       .input("armazem_id", sql.Int, armazemId)
-      .input("tipo", sql.NVarChar(50), "saida")
-      .query(`
+      .input("tipo", sql.NVarChar(50), "saida").query(`
         INSERT INTO Movimentos
         (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
         VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
@@ -1685,11 +1726,13 @@ app.post("/produtos/remover-stock", async (req, res) => {
     return res.json({ message: "Stock atualizado com sucesso" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Erro ao processar remoção de stock" });
+    return res
+      .status(500)
+      .json({ error: "Erro ao processar remoção de stock" });
   }
 });
 
-//criar produto e registar tipo de movimento 
+//criar produto e registar tipo de movimento
 app.post("/produtos", async (req, res) => {
   const { nome, fornecedor, tipoProd } = req.body;
   const nomeVal = String(nome || "").trim();
@@ -1832,7 +1875,6 @@ app.get("/numeroTotalProdutos", async (req, res) => {
 
 //listar todos os movimentos (entradas, saídas, transferências, consumos)
 app.get("/movimentos", async (req, res) => {
-
   try {
     await poolConexao;
 
@@ -1994,8 +2036,7 @@ app.post("/RegistrarContegem", async (req, res) => {
       .input("quantidade", sql.Int, quantidadeInt)
       .input("utilizador_id", sql.Int, utilizadorId)
       .input("armazem_id", sql.Int, armazemId)
-      .input("tipo", sql.NVarChar(50), "Contagem")
-      .query(`
+      .input("tipo", sql.NVarChar(50), "Contagem").query(`
         INSERT INTO Movimentos 
         (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
         VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
@@ -3205,7 +3246,6 @@ app.get("/horasFuncionario/:userId", async (req, res) => {
     await poolConexao;
 
     const result = await pool.request().input("userId", sql.Int, userId).query(`
-        -- Lista os campos que aparecem na pagina Meu registro.
         SELECT id, utilizador_id, data, total_horas, data_importacao
         FROM RegistoFuncionario
         WHERE utilizador_id = @userId

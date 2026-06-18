@@ -71,7 +71,8 @@ async function guardarLocation(userId) {
       throw new Error(data.error || "Erro ao guardar localização");
     }
 
-    console.log("Localização guardada!", data);
+    console.log(data);
+
   } catch (err) {
     console.error("Erro ao guardar localização", err);
     alert(err.message || "Erro ao guardar localização");
