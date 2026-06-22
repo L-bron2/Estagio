@@ -23,6 +23,8 @@ const PERFIL_FUNCIONARIO = 4;
 const PERFIL_GERENTE = 5;
 const PERFIL_ADMIN = 6;
 const TIPOS_PRODUTO_VALIDOS = ["prodVenda", "prodConsumo", "prodBrinde"];
+const ARMAZEM_VALIDOS = [5,6,7];
+
 
 // Converte um valor em inteiro, devolve null se for ivalido
 function toInt(value) {
@@ -37,6 +39,10 @@ function isPositiveInt(value) {
 
 function normalizarTipoProduto(value) {
   return String(value ?? "").trim();
+}
+
+function normalizarArmazem(value) {
+  return toInt(value);
 }
 
 console.log("DB_SERVER =", process.env.DB_SERVER);
@@ -1614,11 +1620,12 @@ app.post("/upload", receberFicheiroUpload, async (req, res) => {
 
 // listar produtos e stock filtrado por armazém
 app.get("/produtos", async (req, res) => {
-  const armazemId = toInt(req.query.armazem_id);
+  const temFiltroArmazem = String(req.query.armazem_id || "").trim() !== "";
+  const armazemId = temFiltroArmazem ? toInt(req.query.armazem_id) : null;
   const tipoProd = normalizarTipoProduto(req.query.tipoProd);
 
-  if (!isPositiveInt(armazemId)) {
-    return res.status(400).send("armazem_id e obrigatorio");
+  if (temFiltroArmazem && !isPositiveInt(armazemId)) {
+    return res.status(400).send("armazem_id invalido");
   }
 
   if (tipoProd && !TIPOS_PRODUTO_VALIDOS.includes(tipoProd)) {
@@ -1628,13 +1635,20 @@ app.get("/produtos", async (req, res) => {
   try {
     await garantirEstruturaProdutos();
 
-    const request = pool.request().input("armazem_id", sql.Int, armazemId);
-    let filtroTipoProduto = "";
+    const request = pool.request();
+    const filtros = [];
+
+    if (temFiltroArmazem) {
+      request.input("armazem_id", sql.Int, armazemId);
+      filtros.push("a.codigo = @armazem_id");
+    }
 
     if (tipoProd) {
       request.input("tipoProd", sql.NVarChar(255), tipoProd);
-      filtroTipoProduto = "WHERE p.tipoProd = @tipoProd";
+      filtros.push("p.tipoProd = @tipoProd");
     }
+
+    const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
 
     const result = await request.query(`
         SELECT 
@@ -1642,6 +1656,7 @@ app.get("/produtos", async (req, res) => {
           p.nome,
           p.fornecedor,
           p.tipoProd,
+          a.codigo AS armazem_id,
           ISNULL(SUM(
             CASE 
               WHEN m.tipo_movimento = 'entrada' THEN m.quantidade
@@ -1651,13 +1666,13 @@ app.get("/produtos", async (req, res) => {
           ), 0) AS stock,
           a.descricao AS armazem_nome
         FROM Produtos p
+        CROSS JOIN Armazem a
         LEFT JOIN Movimentos m 
           ON p.id = m.produto_id 
-          AND m.armazem_id = @armazem_id
-        LEFT JOIN Armazem a ON a.codigo = @armazem_id
-        ${filtroTipoProduto}
-        GROUP BY p.id, p.nome, p.fornecedor, p.tipoProd, a.descricao
-        ORDER BY p.nome ASC
+          AND m.armazem_id = a.codigo
+        ${where}
+        GROUP BY p.id, p.nome, p.fornecedor, p.tipoProd, a.codigo, a.descricao
+        ORDER BY a.descricao ASC, p.nome ASC
       `);
 
     res.json(result.recordset);
@@ -1780,8 +1795,9 @@ app.post("/produtos", async (req, res) => {
   const tipoProdVal = normalizarTipoProduto(tipoProd);
   const quantidade = Math.max(toInt(req.body.stock) || 0, 0);
   const utilizadorId = toInt(req.body.utilizador_id);
-  const armazemId = toInt(req.body.armazem_id);
-  const {armazemDestion} = req.body;   
+  const armazemSessaoId = toInt(req.body.armazem_id);
+  const armazemDestinoId =
+    normalizarArmazem(req.body.armazemDestino) || armazemSessaoId;
 
   if (!nomeVal) {
     return res.status(400).send("Nome obrigatório");
@@ -1791,55 +1807,115 @@ app.post("/produtos", async (req, res) => {
     return res.status(400).send("Fornecedor obrigatório");
   }
 
-  if (!isPositiveInt(utilizadorId) || !isPositiveInt(armazemId)) {
-    return res.status(400).send("utilizador_id e armazem_id sao obrigatorios");
+  if (!isPositiveInt(utilizadorId) || !isPositiveInt(armazemDestinoId)) {
+    return res.status(400).send("utilizador_id e armazem_id são obrigatórios");
   }
 
   if (!TIPOS_PRODUTO_VALIDOS.includes(tipoProdVal)) {
     return res.status(400).send("Tipo de produto inválido");
   }
 
+  const transaction = new sql.Transaction(pool);
+  let transactionStarted = false;
+
   try {
     await garantirEstruturaProdutos();
-    if (armazemDestion) {
 
-      const result = await pool
-        .request()
-        .input("nome", sql.NVarChar(255), nomeVal)
-        .input("fornecedor", sql.NVarChar(255), fornecedorVal)
-        .input("armazemDestino", sql.Int, armazemDestino)
-        .input("tipoProd", sql.NVarChar(255), tipoProdVal).query(`
-          INSERT INTO Produtos (nome, fornecedor, tipoProd)
-          JOIN Armazem where id = armazemID
-          OUTPUT INSERTED.id
-          VALUES (@nome, @fornecedor, @tipoProd)
-        `);
-  
-      const produtoId = result.recordset[0].id;
-    } else {
+    const armazemResult = await pool
+      .request()
+      .input("armazem_id", sql.Int, armazemDestinoId).query(`
+        SELECT codigo
+        FROM Armazem
+        WHERE codigo = @armazem_id
+      `);
 
-      await pool
-        .request()
-        .input("produto_id", sql.Int, produtoId)
-        .input("quantidade", sql.Int, quantidade)
-        .input("tipo", sql.NVarChar(50), "entrada")
-        .input("utilizador_id", sql.Int, utilizadorId)
-        .input("armazem_id", sql.Int, armazemId).query(`
-          INSERT INTO Movimentos 
-          (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
-          VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
-        `);
-  
-      res.status(201).send("Produto criado");
+    if (!armazemResult.recordset.length) {
+      return res.status(400).send("Armazem invalido");
     }
 
+    await transaction.begin();
+    transactionStarted = true;
+
+    const produtoResult = await new sql.Request(transaction)
+      .input("nome", sql.NVarChar(255), nomeVal)
+      .input("fornecedor", sql.NVarChar(255), fornecedorVal)
+      .input("tipoProd", sql.NVarChar(255), tipoProdVal).query(`
+        INSERT INTO Produtos (nome, fornecedor, tipoProd)
+        OUTPUT INSERTED.id
+        VALUES (@nome, @fornecedor, @tipoProd)
+      `);
+
+    const produtoId = produtoResult.recordset[0].id;
+
+    await new sql.Request(transaction)
+      .input("produto_id", sql.Int, produtoId)
+      .input("quantidade", sql.Int, quantidade)
+      .input("tipo", sql.NVarChar(50), "entrada")
+      .input("utilizador_id", sql.Int, utilizadorId)
+      .input("armazem_id", sql.Int, armazemDestinoId).query(`
+        INSERT INTO Movimentos 
+        (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
+        VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
+      `);
+
+    await transaction.commit();
+
+    return res.status(201).json({
+      id: produtoId,
+      armazem_id: armazemDestinoId,
+      message: "Produto criado",
+    });
+
   } catch (err) {
+    if (transactionStarted && transaction._aborted !== true) {
+      await transaction.rollback().catch(() => {});
+    }
     console.error(err);
     res.status(500).send("Erro ao criar produto");
   }
 });
 
-// apagar produto e histórico (restrito a gerente/admin)
+// atualizar fornecedor do produto
+app.post("/produtos/:id", async (req, res) => {
+  const id = toInt(req.params.id);
+  const fornecedorVal = String(req.body.fornecedor || "").trim();
+
+  if (!isPositiveInt(id)) {
+    return res.status(400).send("Produto invalido");
+  }
+
+  if (!fornecedorVal) {
+    return res.status(400).send("Fornecedor obrigatorio");
+  }
+
+  try {
+    await garantirEstruturaProdutos();
+
+    const result = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .input("fornecedor", sql.NVarChar(255), fornecedorVal).query(`
+        UPDATE Produtos
+        SET fornecedor = @fornecedor
+        OUTPUT INSERTED.id, INSERTED.fornecedor
+        WHERE id = @id
+      `);
+
+    if (!result.recordset.length) {
+      return res.status(404).send("Produto nao encontrado");
+    }
+
+    res.json({
+      message: "Produto atualizado",
+      produto: result.recordset[0],
+    });
+  } catch (err) {
+    console.error("Erro ao atualizar produto:", err);
+    res.status(500).send("Erro ao atualizar produto");
+  }
+});
+
+// apagar produto e historico (restrito a gerente/admin)
 app.delete("/produtos/:id", async (req, res) => {
   const id = toInt(req.params.id);
   const userId = toInt(req.body.userId);

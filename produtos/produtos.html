@@ -54,6 +54,19 @@
     <!-- Pesquisa -->
     <input type="text" id="pesquisa" placeholder="Procurar produto...">
 
+    <div class="filtros-produtos">
+      <select id="filtroArmazem">
+        <option value="">Todos os armazens</option>
+      </select>
+
+      <select id="filtroTipoProd">
+        <option value="">Todos os tipos</option>
+        <option value="prodVenda">Produtos para venda</option>
+        <option value="prodConsumo">Produtos para consumo</option>
+        <option value="prodBrinde">Produtos para brinde</option>
+      </select>
+    </div>
+
     <!--  Form -->
     <form id="form-produto">
       <input type="text" id="nome" placeholder="Nome do produto" required>
@@ -70,10 +83,7 @@
       <!--Armazem disponiveis-->
       <section>
         <select name="armazemDestino" id="armazemDestino" required>
-          <option value="" disabled selected >Armazem</option>
-          <option value="ArmazemP">ArmazemP(P): AMZ005</option>
-          <option value="ArmazemS">Armazem(S): AMZ006</option>
-          <option value="ArmazemC">Armazem(C): AMZ007</option>
+          <option value="" disabled selected>Armazem</option>
         </select>
       </section>
       <input type="text" id="fornecedor" placeholder="Fornecedor" required>
