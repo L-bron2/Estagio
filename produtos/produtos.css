@@ -436,7 +436,7 @@ td input[type="number"]::-webkit-inner-spin-button {
 td input[type="number"] {
   -moz-appearance: textfield;
 }
-
+  
 /* CONSUMO  btn */
 .btnConsumo {
   border-radius: 8px;

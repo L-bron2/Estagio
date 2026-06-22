@@ -1915,7 +1915,7 @@ app.post("/produtos/:id", async (req, res) => {
   }
 });
 
-// apagar produto e historico (restrito a gerente/admin)
+// apagar produto e historico (gerente e admin)
 app.delete("/produtos/:id", async (req, res) => {
   const id = toInt(req.params.id);
   const userId = toInt(req.body.userId);
@@ -1939,7 +1939,7 @@ app.delete("/produtos/:id", async (req, res) => {
 
     const perfilId = userResult.recordset[0].perfil_id;
 
-    // Apenas Gerentes (5) e Administradores (6) podem apagar produtos
+    //apenas gerente e admin podem apagar produto
     if (perfilId !== PERFIL_GERENTE && perfilId !== PERFIL_ADMIN) {
       return res.status(403).json({
         message: "Apenas gerentes e administradores podem apagar produtos",
