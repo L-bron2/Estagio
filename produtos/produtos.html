@@ -13,8 +13,8 @@
 <!-- 
 -remover btn de consumo da pagina de produto (feito)
 -ser possivel registrar produtos (feito)
--ser possivel alterar o armazem
--ser possivel alterar o fornecedor
+-ser possivel alterar o armazem em que o produto sera inserido
+-ser possivel alterar o fornecedor dos produtos
 -Deve ser possivel filtrar por armazem a listagem de produtos
 -Se tiver o filtro armazem selecionado, ao registar novo produto,
  a linha surge já com o armazem preenchido igual ao selecionado
@@ -36,7 +36,7 @@
     </div>
     
     <div class="montra">
-      <a href="../montra/montra.html">Produtos-Prateleira</a>
+      <a href="../montra/montra.html">Registrar-contagem</a>
     </div>
     
     <div class="voltar">
@@ -65,6 +65,15 @@
           <option value="prodVenda">Venda</option>
           <option value="prodConsumo">Consumo</option>
           <option value="prodBrinde">Brinde</option>
+        </select>
+      </section>
+      <!--Armazem disponiveis-->
+      <section>
+        <select name="armazemDestino" id="armazemDestino" required>
+          <option value="" disabled selected >Armazem</option>
+          <option value="ArmazemP">ArmazemP(P): AMZ005</option>
+          <option value="ArmazemS">Armazem(S): AMZ006</option>
+          <option value="ArmazemC">Armazem(C): AMZ007</option>
         </select>
       </section>
       <input type="text" id="fornecedor" placeholder="Fornecedor" required>

@@ -42,11 +42,53 @@ function renderizarHistorico(visualizacoes) {
   });
 }
 
-//guardar localização da loja (para ir buscar os registros corretos na bd)
-async function guardarLocation(userId) {
+function aplicarLocationNoSelect(location, bloqueada = false) {
   const selectLocation = document.getElementById("location");
 
   if (!selectLocation) {
+    return;
+  }
+
+  const locationNormalizada = String(location || "").trim();
+
+  if (locationNormalizada) {
+    const existeOpcao = Array.from(selectLocation.options).some(
+      (option) => option.value === locationNormalizada,
+    );
+
+    if (!existeOpcao) {
+      selectLocation.add(new Option(locationNormalizada, locationNormalizada));
+    }
+
+    selectLocation.value = locationNormalizada;
+    selectLocation.dataset.locationGuardada = locationNormalizada;
+  }
+
+  selectLocation.disabled = bloqueada;
+  selectLocation.classList.toggle("location-bloqueada", bloqueada);
+}
+
+//carregar localizacao da loja guardada na bd
+async function carregarLocation(userId) {
+  try {
+    const res = await fetch(`${baseAPI}/location/${userId}`);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || "Erro ao buscar localizacao");
+    }
+
+    aplicarLocationNoSelect(data.location, data.bloqueada);
+  } catch (err) {
+    console.error("Erro ao buscar localizacao", err);
+  }
+}
+
+//guardar localizacao da loja (para ir buscar os registros corretos na bd)
+async function guardarLocation(userId) {
+  const selectLocation = document.getElementById("location");
+
+  if (!selectLocation || selectLocation.disabled) {
     return;
   }
 
@@ -55,6 +97,9 @@ async function guardarLocation(userId) {
   if (!location) {
     return;
   }
+
+  const locationAnterior = selectLocation.dataset.locationGuardada || "";
+  selectLocation.disabled = true;
 
   try {
     const res = await fetch(`${baseAPI}/location/${userId}`, {
@@ -68,14 +113,23 @@ async function guardarLocation(userId) {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      if (data.location) {
+        aplicarLocationNoSelect(data.location, data.bloqueada ?? true);
+      }
+
       throw new Error(data.error || "Erro ao guardar localização");
     }
 
-    console.log(data);
-
+    aplicarLocationNoSelect(data.location || location, true);
   } catch (err) {
     console.error("Erro ao guardar localização", err);
     alert(err.message || "Erro ao guardar localização");
+
+    if (!selectLocation.dataset.locationGuardada) {
+      selectLocation.disabled = false;
+      selectLocation.value = locationAnterior;
+      selectLocation.classList.remove("location-bloqueada");
+    }
   }
 }
 
@@ -528,6 +582,12 @@ window.addEventListener("click", fecharModalHistorico);
 
 //DOM
 document.addEventListener("DOMContentLoaded", () => {
+  const userId = sessionStorage.getItem("userId");
+
+  if (userId) {
+    carregarLocation(userId);
+  }
+
   carregarCodigos();
   atualizarMenuPorPermissoes();
   carregarPDFs();

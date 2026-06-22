@@ -1443,70 +1443,110 @@ app.post("/aceitar-termos-pdfs", async (req, res) => {
   }
 });
 
-//guardar a localização (alverca/montijo)
-app.post("/location/:userId", async (req, res) => {
+//buscar a localizacao guardada do utilizador
+app.get("/location/:userId", async (req, res) => {
   const userId = toInt(req.params.userId);
-  const { location } = req.body;
 
   if (!isPositiveInt(userId)) {
-    return res.status(400).json({ error: "userId inválido" });
-  }
-
-  if (!location || !String(location).trim()) {
-    return res.status(400).json({ error: "Localização é obrigatória" });
+    return res.status(400).json({ error: "userId invalido" });
   }
 
   try {
     await poolConexao;
 
-    const checkLocation = await pool
-      .request()
-      .input(userId, sql.Int, userId)
-      .input(location, sql.NVarChar(50), location).query(`
-      SELECT * FROM Utilizadores WHERE codigo = @userId
-      `);
+    const result = await pool.request().input("userId", sql.Int, userId).query(`
+      SELECT [location]
+      FROM Utilizador
+      WHERE codigo = @userId
+    `);
 
-    if (checkLocation.recordset.length > 0) {
-      return res.status(200).json({
-        message: "Esse utilizador já esta acossidado a uma localização",
-      });
+    if (!result.recordset.length) {
+      return res.status(404).json({ error: "Utilizador nao encontrado" });
     }
 
-    const existeLocation = checkLocation.recordset.length > 0;
+    const location = String(result.recordset[0].location || "").trim();
 
-    if (existeLocation) {
-      await request(
-        sql.query(`
-        UPDATE Utilizador 
-        SET location = @location
-        WHERE codigo = @userId
-        `),
-      );
-
-      return res.json({
-        "Localização atualizada": true,
-        location: String(location).trim(),
-      });
-    } else {
-      const result = await pool
-        .request()
-        .input("userId", sql.Int, userId)
-        .input("location", sql.NVarChar(50), String(location).trim()).query(`
-          INSERT INTO Utilizador (location) VALUE (@location) WHERE codigo = @userId
-        `);
-
-      if (result.rowsAffected[0] === 0) {
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-      }
-
-      return res.json({
-        "Localização guardada": true,
-        location: String(location).trim(),
-      });
-    }
+    return res.json({
+      location: location || null,
+      bloqueada: Boolean(location),
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Erro ao guardar localização" });
+    return res.status(500).json({ error: "Erro ao buscar localizacao" });
+  }
+});
+
+//guardar a localizacao (alverca/montijo) apenas uma vez
+app.post("/location/:userId", async (req, res) => {
+  const userId = toInt(req.params.userId);
+  const location = String(req.body.location || "").trim();
+
+  if (!isPositiveInt(userId)) {
+    return res.status(400).json({ error: "userId invalido" });
+  }
+
+  if (!location) {
+    return res.status(400).json({ error: "Localizacao e obrigatoria" });
+  }
+
+  try {
+    await poolConexao;
+
+    const utilizador = await pool.request().input("userId", sql.Int, userId)
+      .query(`
+        SELECT [location]
+        FROM Utilizador
+        WHERE codigo = @userId
+      `);
+
+    if (!utilizador.recordset.length) {
+      return res.status(404).json({ error: "Utilizador nao encontrado" });
+    }
+
+    const locationAtual = String(utilizador.recordset[0].location || "").trim();
+
+    if (locationAtual) {
+      return res.status(409).json({
+        error: "A localizacao ja foi escolhida e nao pode ser alterada",
+        location: locationAtual,
+        bloqueada: true,
+      });
+    }
+
+    const result = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .input("location", sql.NVarChar(50), location).query(`
+        UPDATE Utilizador
+        SET [location] = @location
+        WHERE codigo = @userId
+          AND NULLIF(LTRIM(RTRIM(ISNULL([location], ''))), '') IS NULL
+      `);
+
+    if (result.rowsAffected[0] === 0) {
+      const locationGuardada = await pool
+        .request()
+        .input("userId", sql.Int, userId).query(`
+          SELECT [location]
+          FROM Utilizador
+          WHERE codigo = @userId
+        `);
+
+      return res.status(409).json({
+        error: "A localizacao ja foi escolhida e nao pode ser alterada",
+        location: String(locationGuardada.recordset[0]?.location || "").trim(),
+        bloqueada: true,
+      });
+    }
+
+    return res.json({
+      ok: true,
+      location,
+      bloqueada: true,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao guardar localizacao" });
   }
 });
 
@@ -1741,6 +1781,7 @@ app.post("/produtos", async (req, res) => {
   const quantidade = Math.max(toInt(req.body.stock) || 0, 0);
   const utilizadorId = toInt(req.body.utilizador_id);
   const armazemId = toInt(req.body.armazem_id);
+  const {armazemDestion} = req.body;   
 
   if (!nomeVal) {
     return res.status(400).send("Nome obrigatório");
@@ -1760,32 +1801,38 @@ app.post("/produtos", async (req, res) => {
 
   try {
     await garantirEstruturaProdutos();
+    if (armazemDestion) {
 
-    const result = await pool
-      .request()
-      .input("nome", sql.NVarChar(255), nomeVal)
-      .input("fornecedor", sql.NVarChar(255), fornecedorVal)
-      .input("tipoProd", sql.NVarChar(255), tipoProdVal).query(`
-        INSERT INTO Produtos (nome, fornecedor, tipoProd)
-        OUTPUT INSERTED.id
-        VALUES (@nome, @fornecedor, @tipoProd)
-      `);
+      const result = await pool
+        .request()
+        .input("nome", sql.NVarChar(255), nomeVal)
+        .input("fornecedor", sql.NVarChar(255), fornecedorVal)
+        .input("armazemDestino", sql.Int, armazemDestino)
+        .input("tipoProd", sql.NVarChar(255), tipoProdVal).query(`
+          INSERT INTO Produtos (nome, fornecedor, tipoProd)
+          JOIN Armazem where id = armazemID
+          OUTPUT INSERTED.id
+          VALUES (@nome, @fornecedor, @tipoProd)
+        `);
+  
+      const produtoId = result.recordset[0].id;
+    } else {
 
-    const produtoId = result.recordset[0].id;
+      await pool
+        .request()
+        .input("produto_id", sql.Int, produtoId)
+        .input("quantidade", sql.Int, quantidade)
+        .input("tipo", sql.NVarChar(50), "entrada")
+        .input("utilizador_id", sql.Int, utilizadorId)
+        .input("armazem_id", sql.Int, armazemId).query(`
+          INSERT INTO Movimentos 
+          (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
+          VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
+        `);
+  
+      res.status(201).send("Produto criado");
+    }
 
-    await pool
-      .request()
-      .input("produto_id", sql.Int, produtoId)
-      .input("quantidade", sql.Int, quantidade)
-      .input("tipo", sql.NVarChar(50), "entrada")
-      .input("utilizador_id", sql.Int, utilizadorId)
-      .input("armazem_id", sql.Int, armazemId).query(`
-        INSERT INTO Movimentos 
-        (produto_id, quantidade, tipo_movimento, data_movimento, utilizador_id, armazem_id)
-        VALUES (@produto_id, @quantidade, @tipo, GETDATE(), @utilizador_id, @armazem_id)
-      `);
-
-    res.status(201).send("Produto criado");
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao criar produto");
