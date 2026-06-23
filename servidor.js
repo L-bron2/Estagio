@@ -1876,7 +1876,7 @@ app.post("/produtos", async (req, res) => {
 });
 
 // atualizar fornecedor do produto
-app.post("/produtos/:id", async (req, res) => {
+app.put("/produtos/:id", async (req, res) => {
   const id = toInt(req.params.id);
   const fornecedorVal = String(req.body.fornecedor || "").trim();
 
@@ -1909,6 +1909,7 @@ app.post("/produtos/:id", async (req, res) => {
       message: "Produto atualizado",
       produto: result.recordset[0],
     });
+
   } catch (err) {
     console.error("Erro ao atualizar produto:", err);
     res.status(500).send("Erro ao atualizar produto");

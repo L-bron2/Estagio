@@ -186,109 +186,109 @@ async function carregarProdutos() {
   });
 }
 
-// MOSTRAR PRODUTOS
-function mostrarProdutos() {
-  const tabela = document.getElementById("tabela-produtos");
-  tabela.innerHTML = "";
+  // MOSTRAR PRODUTOS
+  function mostrarProdutos() {
+    const tabela = document.getElementById("tabela-produtos");
+    tabela.innerHTML = "";
 
-  const termoPesquisa = document.getElementById("pesquisa")?.value || "";
-  const termoNormalizado = normalizarTexto(termoPesquisa);
-  const filtroTipoProd = document.getElementById("filtroTipoProd")?.value || "";
+    const termoPesquisa = document.getElementById("pesquisa")?.value || "";
+    const termoNormalizado = normalizarTexto(termoPesquisa);
+    const filtroTipoProd = document.getElementById("filtroTipoProd")?.value || "";
 
-  const filtrados = produtos.filter((p) => {
-    const correspondePesquisa = normalizarTexto(p.nome).includes(
-      termoNormalizado,
-    );
-    const correspondeTipo = !filtroTipoProd || p.tipoProd === filtroTipoProd;
+    const filtrados = produtos.filter((p) => {
+      const correspondePesquisa = normalizarTexto(p.nome).includes(
+        termoNormalizado,
+      );
+      const correspondeTipo = !filtroTipoProd || p.tipoProd === filtroTipoProd;
 
-    return correspondePesquisa && correspondeTipo;
-  });
+      return correspondePesquisa && correspondeTipo;
+    });
 
-  const totalPaginas = Math.ceil(filtrados.length / porPagina) || 1;
+    const totalPaginas = Math.ceil(filtrados.length / porPagina) || 1;
 
-  if (paginaAtual > totalPaginas) {
-    paginaAtual = totalPaginas;
-  }
-
-  const inicio = (paginaAtual - 1) * porPagina;
-  const pagina = filtrados.slice(inicio, inicio + porPagina);
-
-  pagina.forEach((produto) => {
-    const tr = document.createElement("tr");
-    const produtoId = parseInt(produto.id, 10);
-
-    if (Number(produto.stock) <= 2) {
-      tr.classList.add("baixo");
+    if (paginaAtual > totalPaginas) {
+      paginaAtual = totalPaginas;
     }
 
-    //Permissões para apagar produto (apenas admin e gerente)
-    const perfilId = parseInt(sessionStorage.getItem("perfil_id"), 10);
-    const podeApagar = perfilId === 5 || perfilId === 6;
-    const botaoApagar = podeApagar
-      ? `<button class="apagarProdBTN" onclick="apagarProduto(${produtoId})">Apagar</button>`
-      : "";
+    const inicio = (paginaAtual - 1) * porPagina;
+    const pagina = filtrados.slice(inicio, inicio + porPagina);
 
+    pagina.forEach((produto) => {
+      const tr = document.createElement("tr");
+      const produtoId = parseInt(produto.id, 10);
 
-      //campos da tabela de produto
-    tr.innerHTML = `
-      <td>${escapeHtml(produto.id)}</td>
-      <td>${escapeHtml(produto.nome)}</td>
-      <td>${escapeHtml(nomeTipoProduto(produto.tipoProd))}</td>
-      <td>
-        <input type="text"class="input-fornecedor"
-          value="${escapeHtml(produto.fornecedor || "")} "aria-label="Fornecedor de ${escapeHtml(produto.nome)}">
-
-      </td>
-      <td>${escapeHtml(produto.armazem_nome || "-")}</td>
-      <td>${escapeHtml(produto.stock)}</td>
-
-      <td class="acoes-produto">
-        <button class="guardarProdBTN" onclick="guardarFornecedor(${produtoId}, this)">Guardar</button>
-        ${botaoApagar}
-      </td>
-    `;
-
-    tabela.appendChild(tr);
-  });
-
-  document.getElementById("pagina-info").innerText =
-    `Pagina ${paginaAtual} de ${totalPaginas}`;
-}
-
-
-//guardar fornecedor
-async function guardarFornecedor(id, botao) {
-  const linha = botao?.closest("tr");
-  const input = linha?.querySelector(".input-fornecedor");
-  const fornecedor = input?.value.trim();
-
-  if (!fornecedor) {
-    alert("Fornecedor obrigatorio");
-    return;
-  }
-
-  try {
-    await comLoader(async () => {
-      const response = await fetch(`${listAPI}/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fornecedor
-        }),
-      });
-
-      if (!response.ok) {
-        const erro = await response.text();
-        throw new Error(erro || "Erro ao atualizar fornecedor");
+      if (Number(produto.stock) <= 2) {
+        tr.classList.add("baixo");
       }
 
-      await carregarProdutos();
-      alert("Fornecedor atualizado!");
+      //Permissões para apagar produto (apenas admin e gerente)
+      const perfilId = parseInt(sessionStorage.getItem("perfil_id"), 10);
+      const podeApagar = perfilId === 5 || perfilId === 6;
+      const botaoApagar = podeApagar
+        ? `<button class="apagarProdBTN" onclick="apagarProduto(${produtoId})">Apagar</button>`
+        : "";
+
+
+        //campos da tabela de produto
+      tr.innerHTML = `
+        <td>${escapeHtml(produto.id)}</td>
+        <td>${escapeHtml(produto.nome)}</td>
+        <td>${escapeHtml(nomeTipoProduto(produto.tipoProd))}</td>
+        <td>
+          <input type="text"class="input-fornecedor"
+            value="${escapeHtml(produto.fornecedor || "")} "aria-label="Fornecedor de ${escapeHtml(produto.nome)}">
+
+        </td>
+        <td>${escapeHtml(produto.armazem_nome || "-")}</td>
+        <td>${escapeHtml(produto.stock)}</td>
+
+        <td class="acoes-produto">
+          <button class="guardarProdBTN" onclick="guardarFornecedor(${produtoId}, this)">Guardar</button>
+          ${botaoApagar}
+        </td>
+      `;
+
+      tabela.appendChild(tr);
     });
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "Erro ao atualizar fornecedor");
+
+    document.getElementById("pagina-info").innerText =
+      `Pagina ${paginaAtual} de ${totalPaginas}`;
   }
-}
+
+  //guardar fornecedor
+  async function guardarFornecedor(id, botao) {
+    const linha = botao?.closest("tr");
+    const input = linha?.querySelector(".input-fornecedor");
+    const fornecedor = input?.value.trim();
+
+    if (!fornecedor) {
+      alert("Fornecedor obrigatorio");
+      return;
+    }
+    console.log(`${listAPI}/${id}`);
+    try {
+      await comLoader(async () => {
+        const response = await fetch(`${listAPI}/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fornecedor
+          }),
+        });
+
+        if (!response.ok) {
+          const erro = await response.text();
+          throw new Error(erro || "Erro ao atualizar fornecedor");
+        }
+
+        await carregarProdutos();
+        alert("Fornecedor atualizado!");
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Erro ao atualizar fornecedor");
+    }
+  }
 
 // APAGAR PRODUTO
 async function apagarProduto(id) {
