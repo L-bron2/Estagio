@@ -363,9 +363,16 @@ document
     const userId = sessionStorage.getItem("userId");
     const pdfName = document.getElementById("pdfName").value;
     const pdfFile = document.getElementById("pdfFile").files[0];
+    const selectedLocation =
+      document.getElementById("location")?.value?.trim() || "";
 
     if (!pdfName || !pdfFile) {
       alert("selecione um ficheiro e dê-lhe um nome.");
+      return;
+    }
+
+    if (!selectedLocation) {
+      alert("Selecione a localização antes de enviar o ficheiro.");
       return;
     }
 
@@ -373,6 +380,7 @@ document
     formData.append("pdfName", pdfName);
     formData.append("pdfFile", pdfFile);
     formData.append("userId", userId);
+    formData.append("location", selectedLocation);
 
     await comLoader(async () => {
       try {

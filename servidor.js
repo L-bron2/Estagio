@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
-// Constantes usadas no ficheiro para configurações e validações
+//variaveis de validações 
 const saltRounds = 10;
 const PERFIL_FUNCIONARIO = 4;
 const PERFIL_GERENTE = 5;
@@ -83,7 +83,7 @@ function limitarTexto(valor = "", limite = 120) {
   return texto.length > limite ? `${texto.slice(0, limite)}...` : texto;
 }
 
-// Formata um valor para exibição de preview
+// Formata um valor para previw
 function formatarValorPreview(valor) {
   if (valor === null || typeof valor === "undefined") {
     return "";
@@ -100,12 +100,12 @@ function formatarValorPreview(valor) {
   return String(valor);
 }
 
-// Escapa caracteres especiais para uso em RegExp
+// Ignora caracteres especias  
 function escaparParaRegex(valor = "") {
   return String(valor).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Verifica se uma linha  tem alguma célula com conteúdo
+// verifica se uma linha tem conteúdo
 function linhaTemConteudo(linha = []) {
   return (
     Array.isArray(linha) &&
@@ -393,14 +393,14 @@ async function gerarRelatorioUpload(upload) {
     return gerarRelatorioGenerico(
       upload,
       "word",
-      "Ficheiro Word disponivel para relatorio de metadados.",
+      "Ainda em teste para ficheiros word"
     );
   }
 
   return gerarRelatorioGenerico(
     upload,
     "ficheiro",
-    "Ficheiro disponivel para relatorio de metadados.",
+    "Ficheiro disponivel para relatorio .",
   );
 }
 
@@ -626,7 +626,7 @@ function mapearColunasRegistoFuncionario(cabecalho = []) {
   );
 }
 
-// Verifica se o mapa de colunas contém as colunas mínimas para ser considerado um ficheiro de ponto
+// verifica o numero de colunas do ficheiro
 function mapaTemColunasPonto(mapa) {
   return mapa.numeroEmpregado >= 0 && mapa.data >= 0 && mapa.horasDiarias >= 0;
 }
@@ -717,7 +717,7 @@ function normalizarNumeroEmpregado(valor) {
 }
 
 // Importa registos do ficheiro usando apenas as colunas definidas em colunasRegistoFuncionario()
-async function importarRegistosFuncionario(upload) {
+async function importarRegistosFuncionario(upload, location = null) {
   try {
     const linhas = extrairLinhasRegistoFuncionario(upload);
 
@@ -741,8 +741,9 @@ async function importarRegistosFuncionario(upload) {
 
     const linhasDados = linhas.slice(cabecalho.indice + 1);
 
-    // carregar funcionários existentes
-    const utilizadoresResult = await pool.request().query(`
+    // carregar funcionários existentes da localização selecionada
+    const request = pool.request();
+    let query = `
         SELECT
           u.codigo,
           f.numero_empregado
@@ -750,7 +751,14 @@ async function importarRegistosFuncionario(upload) {
         INNER JOIN FichaPessoal f
           ON u.codigo = f.utilizador_codigo
         WHERE f.numero_empregado IS NOT NULL
-      `);
+      `;
+
+    if (location) {
+      request.input("location", sql.NVarChar(50), location);
+      query += ` AND LTRIM(RTRIM(ISNULL(u.[location], ''))) = @location`;
+    }
+
+    const utilizadoresResult = await request.query(query);
 
     const mapaUtilizadores = new Map();
 
@@ -944,7 +952,7 @@ async function reimportarRegistosFuncionarioGuardados() {
   return resumo;
 }
 
-// Normaliza horas de Excel/texto para decimal: 8:30 -> 8.5.
+// Normaliza horas de Excel/texto 
 function normalizarHorasDecimais(valor) {
   if (valor === null || typeof valor === "undefined") {
     return null;
@@ -1191,6 +1199,8 @@ function receberFicheiroUpload(req, res, next) {
 // variavel para conexão a bd
 const pool = new sql.ConnectionPool(config);
 const poolConexao = pool.connect();
+
+
 let estruturaProdutosPromise = null;
 
 function garantirEstruturaProdutos() {
@@ -1563,6 +1573,7 @@ app.post("/upload", receberFicheiroUpload, async (req, res) => {
     const body = req.body || {};
     const name = String(body.pdfName || file?.originalname || "").trim();
     const userId = toInt(body.userId);
+    const uploadLocation = String(body.location || "").trim();
 
     if (!file) {
       return res.status(400).json({ error: "Ficheiro em falta" });
@@ -1570,6 +1581,10 @@ app.post("/upload", receberFicheiroUpload, async (req, res) => {
 
     if (!isPositiveInt(userId)) {
       return res.status(400).json({ error: "userId obrigatorio" });
+    }
+
+    if (!uploadLocation) {
+      return res.status(400).json({ error: "Localizacao obrigatoria" });
     }
 
     if (!hasAllowedUploadExtensions(file.originalname)) {
@@ -1604,11 +1619,14 @@ app.post("/upload", receberFicheiroUpload, async (req, res) => {
         VALUES (@pdf_id, @utilizador_id, @nome_pdf, @tipo_movimento, GETDATE())
       `);
 
-    const importacaoFuncionario = await importarRegistosFuncionario({
-      nome: name,
-      tipo: file.mimetype,
-      PDF: file.buffer,
-    });
+    const importacaoFuncionario = await importarRegistosFuncionario(
+      {
+        nome: name,
+        tipo: file.mimetype,
+        PDF: file.buffer,
+      },
+      uploadLocation,
+    );
 
     res.json({ ok: true, importacao_registos: importacaoFuncionario });
   } catch (err) {
